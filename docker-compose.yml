@@ -95,6 +95,9 @@ services:
     volumes:
       - ./php:/var/www/html
       - ./scripts/php-entrypoint.sh:/scripts/php-entrypoint.sh:ro
+    environment:
+      - PHP_AUTH_USER=${PHP_AUTH_USER}
+      - PHP_AUTH_PASSWORD=${PHP_AUTH_PASSWORD}
     depends_on:
       mysql:
         condition: service_healthy
@@ -181,12 +184,10 @@ services:
     networks:
       - elastic-network
 
-    
   kibana:
     image: docker.elastic.co/kibana/kibana:9.3.3
     container_name: kibana
     hostname: kibana
-
     ports:
       - "5601:5601"
     environment:
