@@ -1,0 +1,270 @@
+services:
+  mysql:
+    image: mysql:9.6.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  influxdb:
+    image: influxdb:2.8.0
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${ADMIN_USER}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${ADMIN_USER}
+      - DOCKER_INFLUXDB_INIT_BUCKET=telegraf
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:12.4.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=mysql:3306
+      - GF_DATABASE_NAME=${MYSQL_DATABASE}
+      - GF_DATABASE_USER=${MYSQL_USER}
+      - GF_DATABASE_PASSWORD=${MYSQL_PASSWORD}
+      - GF_DATABASE_SSL_MODE=disable
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
+      - monitoring-network
+      - elastic-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.3
+    container_name: phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  php:
+    image: php:8.5.4-apache
+    container_name: php
+    ports:
+      - "80:80"
+    volumes:
+      - ./php:/var/www/html
+      - ./scripts/php-entrypoint.sh:/scripts/php-entrypoint.sh:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/scripts/php-entrypoint.sh"]
+    networks:
+      - app-network
+
+  telegraf:
+    image: telegraf:1.38.2
+    container_name: telegraf
+    user: root
+    environment:
+      - DOCKER_API_VERSION=1.44
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - ADMIN_USER=${ADMIN_USER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts/telegraf-entrypoint.sh:/scripts/telegraf-entrypoint.sh:ro
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    entrypoint: ["/bin/bash", "/scripts/telegraf-entrypoint.sh"]
+
+  suricata:
+    image: jasonish/suricata:8.0.4
+    container_name: suricata
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+    volumes:
+      - ./suricata:/etc/suricata
+      - suricata_logs:/var/log/suricata
+      - suricata_data:/var/lib/suricata
+      - suricata_run:/var/run/suricata
+      - ./scripts/suricata-entrypoint.sh:/scripts/suricata-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/suricata-entrypoint.sh"]
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.3
+    container_name: elasticsearch
+    hostname: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    restart: unless-stopped
+    networks:
+      - elastic-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:$$ELASTIC_PASSWORD http://localhost:9200/_cluster/health | grep -q '\"status\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  elastic-setup:
+    image: curlimages/curl:8.19.0
+    container_name: elastic-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - KIBANA_SYSTEM_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
+    restart: "no"
+    volumes:
+      - ./scripts/elastic-setup-entrypoint.sh:/scripts/elastic-setup-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/elastic-setup-entrypoint.sh"]
+    networks:
+      - elastic-network
+
+    
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.3.3
+    container_name: kibana
+    hostname: kibana
+
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
+      - XPACK_SECURITY_ENCRYPTIONKEY=4f09f0ec6e500f97ed051b93415dbed958085a081c41a959d845ce2d3cfbe196
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=86f1ee13781e59406f990c23ac5e8361addac47fcab79b0b1ff36587a7ac4ddc
+      - XPACK_REPORTING_ENCRYPTIONKEY=ae195d7687cd29d4999dedc2f5ea819502da2e8aa42500ba7cdd2040cfc63649
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      elastic-setup:
+        condition: service_completed_successfully
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    restart: unless-stopped
+    networks:
+      - elastic-network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.3.3
+    container_name: filebeat
+    user: root
+    environment:
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - suricata_logs:/var/log/suricata:ro
+      - ./scripts/filebeat-entrypoint.sh:/scripts/filebeat-entrypoint.sh:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - elastic-network
+    entrypoint: ["/bin/bash", "/scripts/filebeat-entrypoint.sh"]
+
+  ubuntu:
+    image: ubuntu:26.04
+    container_name: ubuntu_scripts
+    volumes:
+      - ./scripts:/scripts
+    working_dir: /scripts
+    stdin_open: true
+    tty: true
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+  monitoring-network:
+    driver: bridge
+  elastic-network:
+    driver: bridge
+
+volumes:
+  mysql_data: {}
+  influxdb_data: {}
+  influxdb_config: {}
+  grafana_data: {}
+  suricata_logs: {}
+  suricata_data: {}
+  suricata_run: {}
+  elasticsearch_data: {}
+  kibana_data: {}
