@@ -127,6 +127,7 @@ services:
     container_name: suricata
     cap_add:
       - NET_ADMIN
+      - NET_RAW
     network_mode: host
     volumes:
       - ./suricata:/etc/suricata
