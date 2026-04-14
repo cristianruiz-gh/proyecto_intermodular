@@ -13,7 +13,8 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     restart: unless-stopped
     networks:
-      - app-network
+      app-network:
+        ipv4_address: 172.26.203.60
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -38,7 +39,8 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
     restart: unless-stopped
     networks:
-      - monitoring-network
+      monitoring-network:
+        ipv4_address: 172.26.203.66
     healthcheck:
       test: ["CMD", "influx", "ping"]
       interval: 10s
@@ -66,9 +68,12 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - app-network
-      - monitoring-network
-      - elastic-network
+      app-network:
+        ipv4_address: 172.26.203.59
+      monitoring-network:
+        ipv4_address: 172.26.203.68
+      elastic-network:
+        ipv4_address: 172.26.203.86
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:5.2.3
@@ -85,7 +90,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - app-network
+      app-network:
+        ipv4_address: 172.26.203.61
 
   php:
     image: php:8.5.4-apache
@@ -104,7 +110,8 @@ services:
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/scripts/php-entrypoint.sh"]
     networks:
-      - app-network
+      app-network:
+        ipv4_address: 172.26.203.62
 
   telegraf:
     image: telegraf:1.38.2
@@ -122,7 +129,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - monitoring-network
+      monitoring-network:
+        ipv4_address: 172.26.203.67
     entrypoint: ["/bin/bash", "/scripts/telegraf-entrypoint.sh"]
 
   suricata:
@@ -160,7 +168,8 @@ services:
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     restart: unless-stopped
     networks:
-      - elastic-network
+      elastic-network:
+        ipv4_address: 172.26.203.82
     healthcheck:
       test: ["CMD-SHELL", "curl -s -u elastic:$$ELASTIC_PASSWORD http://localhost:9200/_cluster/health | grep -q '\"status\"'"]
       interval: 30s
@@ -182,7 +191,8 @@ services:
       - ./scripts/elastic-setup-entrypoint.sh:/scripts/elastic-setup-entrypoint.sh:ro
     entrypoint: ["/bin/sh", "/scripts/elastic-setup-entrypoint.sh"]
     networks:
-      - elastic-network
+      elastic-network:
+        ipv4_address: 172.26.203.83
 
   kibana:
     image: docker.elastic.co/kibana/kibana:9.3.3
@@ -206,7 +216,8 @@ services:
       - kibana_data:/usr/share/kibana/data
     restart: unless-stopped
     networks:
-      - elastic-network
+      elastic-network:
+        ipv4_address: 172.26.203.84
 
   filebeat:
     image: docker.elastic.co/beats/filebeat:9.3.3
@@ -227,7 +238,8 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - elastic-network
+      elastic-network:
+        ipv4_address: 172.26.203.85
     entrypoint: ["/bin/bash", "/scripts/filebeat-entrypoint.sh"]
 
   ubuntu:
@@ -249,15 +261,27 @@ services:
       - DB_PASSWORD=${MYSQL_PASSWORD}
     restart: unless-stopped
     networks:
-      - app-network
+      app-network:
+        ipv4_address: 172.26.203.58
 
 networks:
   app-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.203.48/28
+
   monitoring-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.203.64/28
+
   elastic-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.203.80/28
 
 volumes:
   mysql_data: {}
