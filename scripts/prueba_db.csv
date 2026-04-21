@@ -1,0 +1,8 @@
+codcliente,nombre,apellidos,tipo,fecha,codproducto,codproducto_de_cliente,descripcion_atributo
+500,Aitor,Tola,Nuevo,2026-06-01,100,2001,Cliente valido
+501,Begoña,Mendi,VIP,2026-06-02,101,2002,Cliente valido
+502,,Ruiz,Nuevo,2026-06-03,100,2003,Nombre vacio
+503,Jon, Bilbao,Nuevo,invalid-date,102,2004,Fecha invalida
+504,Maider,Soto,Nuevo,999,2005,Producto no existe
+505,Olatz, Eulate,Nuevo,2026-06-06,,2006,Codigo producto vacio
+506,Unai,Arrieta,Recurrente,2026-06-07,100,2001,Detalle producto repetido

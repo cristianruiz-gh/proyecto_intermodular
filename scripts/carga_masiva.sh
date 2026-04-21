@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if ! command -v mysql &> /dev/null; then
+    echo "Instalando cliente MySQL..."
+    apt-get update -qq && apt-get install -y -qq default-mysql-client > /dev/null 2>&1
+fi
+
 PROCESS_RECORD() {
     start_time=$(date +%s%3N)
     insertado=false
