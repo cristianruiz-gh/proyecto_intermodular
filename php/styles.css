@@ -1,0 +1,201 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 40px 20px;
+    color: #e0f0ff;
+    background: url('imagenes/Fondo.png') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.card {
+    max-width: 1000px;
+    margin: 0 0 0 5%;
+    padding: 40px;
+    background: linear-gradient(160deg, #0d2847 0%, #0a1f38 100%);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 30, 60, 0.7);
+    border: 1px solid #1a3a5c;
+}
+
+h2 {
+    color: #7ec8e3;
+    margin-top: 0;
+    margin-bottom: 32px;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    border: 1px solid #1e4a6e;
+    box-sizing: border-box;
+    font-size: 14px;
+    font-family: inherit;
+    background: #081525;
+    color: #c0d8f0;
+    transition: all 0.2s;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #4a7a9e;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #00bfff;
+    box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2);
+}
+
+label {
+    display: block;
+    color: #7eb3d6;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.añadir-btn {
+    background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 119, 182, 0.4);
+}
+
+.añadir-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 180, 216, 0.5);
+}
+
+.eliminar-btn {
+    background: transparent;
+    color: #e57373;
+    border: 1px solid #e57373;
+}
+
+.eliminar-btn:hover {
+    background: #e57373;
+    color: #0a1428;
+}
+
+.form-submit-btn {
+    background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 119, 182, 0.4);
+}
+
+.form-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 180, 216, 0.5);
+}
+
+.error {
+    background: rgba(180, 60, 60, 0.2);
+    color: #ff9999;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid rgba(200, 80, 80, 0.4);
+}
+
+.success {
+    background: rgba(0, 119, 182, 0.2);
+    color: #7ec8e3;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid rgba(0, 180, 216, 0.4);
+}
+
+.cliente-form {
+    background: #081525;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #1a3a5c;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+    .form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    min-width: 0;
+}
+
+.botones {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    margin-bottom: 20px;
+}
+
+.file-upload {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding: 20px;
+    background: #081525;
+    border-radius: 10px;
+    border: 1px dashed #1e4a6e;
+}
+
+.file-upload input[type="file"] {
+    display: none;
+}
+
+.file-upload label {
+    display: inline-block;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+    color: #ffffff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 0;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 119, 182, 0.3);
+}
+
+.file-upload label:hover {
+    box-shadow: 0 6px 20px rgba(0, 180, 216, 0.4);
+}
+
+#fileName {
+    color: #4a7a9e;
+    font-size: 14px;
+}

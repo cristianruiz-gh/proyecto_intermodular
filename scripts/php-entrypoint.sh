@@ -11,7 +11,11 @@ cat > /usr/local/etc/php/conf.d/custom.ini <<'INI'
 opcache.enable=0
 opcache.revalidate_freq=0
 session.use_strict_mode=1
-auto_prepend_file=/var/www/html/auth.php
 INI
+
+# Habilitar pdo_mysql y mysqli para conexión a MySQL
+if ! php -m | grep -qi '^mysqli$'; then
+  docker-php-ext-install mysqli
+fi
 
 exec apache2-foreground
