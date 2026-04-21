@@ -7,9 +7,6 @@ if [ ! -f /etc/suricata/suricata.yaml ]; then
   cp -r /etc/suricata.dist/* /etc/suricata/ 2>/dev/null || true
 fi
 
-# Determinar interfaces de captura
-# - Si SURICATA_INTERFACES está definida (espacio-separada), se usa tal cual.
-# - Si no, se intenta cubrir tráfico externo + interno (docker0 y bridges br-*)
 if [ -n "${SURICATA_INTERFACES:-}" ]; then
   INTERFACES="$SURICATA_INTERFACES"
 else
@@ -23,7 +20,6 @@ else
     DOCKER_IFS="docker0"
   fi
 
-  # Interfaces de redes docker compose (br-xxxxxxxx)
   BR_IFS="$(ip -o link show | awk -F': ' '{print $2}' | grep '^br-' || true)"
 
   INTERFACES="$EXT_IF"
@@ -31,15 +27,12 @@ else
   [ -n "$BR_IFS" ] && INTERFACES="$INTERFACES $BR_IFS"
 fi
 
-# Actualizar fuentes antes de reglas
 suricata-update update-sources || true
 
-# Actualizar reglas (evitar que suricata-update intente recargar por socket durante el arranque)
 suricata-update --no-reload || true
 
 echo "Iniciando Suricata en interfaces: $INTERFACES"
 
-# Suricata necesita un -i por interfaz.
 IF_ARGS=""
 for iface in $INTERFACES; do
   [ -n "$iface" ] || continue

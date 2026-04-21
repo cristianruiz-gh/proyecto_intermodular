@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Generamos la configuración de Filebeat
 cat > /usr/share/filebeat/filebeat.yml <<EOF
 filebeat.inputs:
   - type: filestream
@@ -48,12 +47,9 @@ processors:
   - add_docker_metadata: ~
 EOF
 
-# Asegurar permisos correctos para el archivo de configuración
 chown root:root /usr/share/filebeat/filebeat.yml
 chmod 644 /usr/share/filebeat/filebeat.yml
 
-# Intentar instalar los componentes de setup (dashboards/pipelines) antes de arrancar
-# Esto fallará si ES o Kibana no están listos, pero Filebeat seguirá reintentando
 filebeat setup -e || echo "Setup inicial fallido, reintentando en segundo plano..."
 
 exec filebeat -e
