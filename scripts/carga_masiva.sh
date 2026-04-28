@@ -90,16 +90,6 @@ case "$EXT" in
             PROCESS_RECORD
         done < "$DATA_FILE"
         ;;
-    json)
-        jq -r '.[] | [.codcliente, .nombre, .apellidos, .tipo_cliente, .fecha, .codproducto, .codproducto_de_cliente, .descripcion_atributo] | join(",")' "$DATA_FILE" | while IFS=',' read -r codcliente nombre apellidos tipo fecha codproducto codproducto_de_cliente descripcion_atributo; do
-            PROCESS_RECORD
-        done
-        ;;
-    txt)
-        while IFS=',' read -r codcliente nombre apellidos tipo fecha codproducto codproducto_de_cliente descripcion_atributo; do
-            PROCESS_RECORD
-        done < "$DATA_FILE"
-        ;;
     *)
         echo "Error: Formato no soportado."
         exit 1
